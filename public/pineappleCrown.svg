@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320" viewBox="0 0 512 320">
+  <g fill="currentColor">
+    <path d="M256 18 L276 150 L256 292 L236 150 Z"/>
+    <path d="M170 86 L214 154 L226 248 L186 186 Z"/>
+    <path d="M342 86 L326 186 L286 248 L298 154 Z"/>
+    <path d="M82 170 L174 210 L214 272 L126 258 Z"/>
+    <path d="M430 170 L386 258 L298 272 L338 210 Z"/>
+  </g>
+</svg>

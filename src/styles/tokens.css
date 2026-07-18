@@ -1,0 +1,9 @@
+:root {
+  --color-wall: #f1ede6;
+  --color-ink: #1a1a1a;
+  --color-mat: #f5f2ec;
+  --color-muted: #8a8a8a;
+  --color-divider: #555555;
+  --color-nav-bg: #fefdfb;
+  --color-nav-border: rgba(26, 26, 26, 0.15);
+}
