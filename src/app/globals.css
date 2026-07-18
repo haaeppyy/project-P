@@ -20,3 +20,220 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* ===== Hero scene (wall, light, layout) — the room the frame hangs in ===== */
+
+.hero-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 7% 38%, rgba(255, 255, 255, 0.9), transparent 29%),
+    radial-gradient(ellipse at 80% 53%, rgba(255, 255, 255, 0.4), transparent 43%),
+    linear-gradient(110deg, #f3efea 0%, var(--color-wall) 48%, #eeeae5 100%);
+}
+
+/* Wall material: near-invisible large-scale procedural grain so the surface
+   never reads as a flat digital fill. Opacity kept below 2%. */
+.hero-shell > .wall-grain {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.018;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 600px 600px;
+}
+
+/* Broad window light falling from the upper-left. The multiple soft bands
+   create the visible rays in the reference without introducing a 3D scene. */
+.hero-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -18%;
+  left: -24%;
+  width: 78%;
+  height: 132%;
+  pointer-events: none;
+  opacity: 0.31;
+  filter: blur(30px);
+  transform: skewX(-9deg) rotate(-3deg);
+  background:
+    linear-gradient(113deg, transparent 0 22%, rgba(255,255,255,0.5) 31% 36%, transparent 47%),
+    linear-gradient(113deg, transparent 0 41%, rgba(255,255,255,0.38) 50% 54%, transparent 65%),
+    linear-gradient(113deg, transparent 0 61%, rgba(255,255,255,0.26) 70% 74%, transparent 85%);
+  mix-blend-mode: screen;
+}
+
+/* A faint warm pool keeps the light from reading like a cool UI gradient. */
+.hero-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 4%;
+  left: -8%;
+  width: 55%;
+  height: 86%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(255, 248, 236, 0.3), transparent 68%);
+  filter: blur(32px);
+  mix-blend-mode: screen;
+}
+
+.hero-header {
+  height: 82px;
+  padding: 20px 2.4vw 0;
+}
+
+.hero-main {
+  min-height: calc(100svh - 82px);
+}
+
+.hero-composition {
+  gap: clamp(24px, 5vw, 96px);
+  padding-left: 10vw;
+  padding-right: 6vw;
+}
+
+.hero-copy {
+  width: clamp(260px, 28vw, 360px);
+}
+
+.hero-frame-column {
+  width: clamp(260px, 32vw, 420px);
+}
+
+.scroll-cue-wrap {
+  margin-top: 56px;
+}
+
+/* Window light layer driven by the cursor's *velocity* (a hand moving past the
+   frame), not its position. It is the room's light, fixed to the wall — not
+   part of the rigid frame assembly. */
+.lighting-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  --light-shift-x: 0px;
+  --light-shift-y: 0px;
+}
+
+.moving-light-source {
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 46%;
+  height: 64%;
+  background: radial-gradient(
+    ellipse at 30% 30%,
+    rgba(255, 255, 255, 0.5),
+    transparent 60%
+  );
+  filter: blur(40px);
+  mix-blend-mode: screen;
+  transform: translate(var(--light-shift-x), var(--light-shift-y));
+}
+
+.moving-light-ray {
+  position: absolute;
+  top: -20%;
+  left: 8%;
+  width: 70%;
+  height: 140%;
+  background: linear-gradient(
+    112deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.22) 44% 50%,
+    transparent 64%
+  );
+  filter: blur(26px);
+  mix-blend-mode: screen;
+  transform: translate(var(--light-shift-x), var(--light-shift-y));
+}
+
+.moving-light-ray-two {
+  left: 20%;
+  width: 60%;
+  opacity: 0.7;
+  background: linear-gradient(
+    112deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.16) 52% 58%,
+    transparent 72%
+  );
+}
+
+.moving-light-ray-three {
+  left: 34%;
+  width: 52%;
+  opacity: 0.5;
+  background: linear-gradient(
+    112deg,
+    transparent 46%,
+    rgba(255, 255, 255, 0.12) 60% 66%,
+    transparent 80%
+  );
+}
+
+@media (max-width: 900px) {
+  .hero-shell {
+    min-height: 100svh;
+    overflow: auto;
+  }
+
+  .hero-header {
+    height: 82px;
+    padding: 20px 20px 0;
+  }
+
+  .hero-composition {
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+    padding: 48px 24px 56px;
+  }
+
+  .hero-copy,
+  .hero-frame-column {
+    width: min(100%, 620px);
+    transform: none;
+  }
+
+  .hero-copy {
+    order: 2;
+    text-align: center;
+    transform: none;
+  }
+
+  .hero-copy > div {
+    align-items: center;
+  }
+
+  .hero-frame-column {
+    order: 1;
+  }
+
+  .scroll-cue-wrap {
+    margin-top: 34px;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-header {
+    height: 76px;
+  }
+
+  .hero-header .absolute {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+  }
+
+  .hero-header > button {
+    position: absolute;
+    right: 18px;
+    top: 16px;
+  }
+}
