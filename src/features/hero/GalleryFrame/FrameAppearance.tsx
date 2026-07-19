@@ -4,41 +4,70 @@ import HangingSystem from "./HangingSystem";
 /**
  * FrameAppearance — the *visual* definition of the framed photograph.
  *
- * This component is purely presentational. It renders the real extracted black
- * wooden frame PNG, the photograph sitting in the cutout window, and the hanging
- * hardware (pins + wire + crown) above it. It owns NO physics and NO behaviour.
+ * Purely presentational CSS-drawn premium black wooden gallery frame:
+ *   .frame-body      → deep matte-black moulding with bevel, depth, edge lights
+ *   .frame-mat       → thin off-white mat board (secondary, not dominant)
+ *   .photo-window    → the photograph, the dominant interior element
+ *   .glass-reflection→ independent glass streak driven by the physics loop
+ *   .frame-cast-shadow / .frame-contact-shadow → independent, JS-driven shadows
  *
- * All motion is applied by the parent physics controller (GalleryFrame), which
- * rotates this whole subtree as a single rigid body about the suspension point.
- * Keeping appearance separate from behaviour means interaction work can never
- * accidentally restyle the frame again.
+ * Contains ZERO physics or interaction logic. All motion is driven by the parent
+ * physics controller (GalleryFrame / usePendulum), which rotates .frame-body and
+ * composes the lagging shadow / glass / wire elements. Keeping appearance separate
+ * from behaviour means interaction work can never restyle the frame again.
  */
-export default function FrameAppearance() {
+export default function FrameAppearance({
+  bodyRef,
+  castRef,
+  contactRef,
+  glassRef,
+  wireLeftRef,
+  wireRightRef,
+}: {
+  bodyRef: React.Ref<HTMLDivElement>;
+  castRef: React.Ref<HTMLDivElement>;
+  contactRef: React.Ref<HTMLDivElement>;
+  glassRef: React.Ref<HTMLDivElement>;
+  wireLeftRef: React.Ref<SVGPathElement>;
+  wireRightRef: React.Ref<SVGPathElement>;
+}) {
   return (
-    <div className="relative w-full mx-auto">
-      <HangingSystem />
-      {/* Container sized to frame-extracted.png's natural aspect ratio.
-          No forced aspect-ratio, no background fill — fully transparent
-          outside the moulding. The frame PNG defines the box; the photo
-          layers on top inside the cutout window. */}
-      <div
-        className="relative w-full mx-auto"
-        style={{
-          maxWidth: "100%",
-          boxShadow:
-            "0 48px 100px -32px rgba(0,0,0,0.3), 0 16px 40px -20px rgba(0,0,0,0.15)",
-        }}
-      >
-        {/* Real extracted frame + mat texture. Renders at natural proportions
-            (block + w-full + h-auto), defining the container height. */}
-        <img
-          src="/frame-extracted.png"
-          alt=""
-          className="block w-full h-auto"
-          style={{ pointerEvents: "none" }}
-        />
-        {/* Photograph fills the transparent cutout window inside the frame. */}
-        <Photograph />
+    <div className="frame-stage relative w-full mx-auto">
+      {/* Independent shadows, driven by JS so they lag + breathe with the swing. */}
+      <div ref={castRef} className="frame-cast-shadow" aria-hidden="true" />
+      <div ref={contactRef} className="frame-contact-shadow" aria-hidden="true" />
+
+      <div ref={bodyRef} className="frame-body relative">
+        {/* Black wooden moulding: thick profile, inner+outer bevel, edge lights. */}
+        <div className="frame-moulding">
+          {/* Thin mat board — secondary, simply frames the artwork. */}
+          <div className="frame-mat">
+            <div className="photo-window relative overflow-hidden">
+              <Photograph />
+            </div>
+            {/* Artist's signature, quietly placed in the mat's bottom-right
+               corner — discovered only by attentive viewers. Under the glazing,
+               matte black, intentionally small. */}
+            <img
+              src="/signature.png"
+              alt=""
+              aria-hidden="true"
+              className="frame-signature"
+            />
+          </div>
+          {/* Hardware mounting into the wood. The shank lives INSIDE the moulding's
+              stacking context and descends into the wooden top edge; the collar
+              (same wood) paints over its base so the wood wraps the screw — the
+              hardware physically intersects the frame, not merely overlaps it. */}
+          <span className="hanging-shank hanging-shank-left" aria-hidden="true" />
+          <span className="hanging-shank hanging-shank-right" aria-hidden="true" />
+          <span className="hanging-collar hanging-collar-left" aria-hidden="true" />
+          <span className="hanging-collar hanging-collar-right" aria-hidden="true" />
+        </div>
+        <div ref={glassRef} className="glass-reflection" aria-hidden="true" />
+
+        {/* Wires terminate exactly at the frame's top edge. */}
+        <HangingSystem wireLeftRef={wireLeftRef} wireRightRef={wireRightRef} />
       </div>
     </div>
   );

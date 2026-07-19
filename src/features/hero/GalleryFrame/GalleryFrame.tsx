@@ -8,35 +8,73 @@ const REST_TILT = -0.12; // resting micro-imperfection (deg)
 const MAX_ABS = MAX_ABS_DEG;
 
 /**
- * GalleryFrame — the physics *controller*.
+ * GalleryFrame — the physics *controller* (FramePhysics layer).
  *
- * It owns no visual design. It mounts the (visual-only) FrameAppearance inside a
- * single rigid wrapper and drives exactly one transform on that wrapper: a
- * rotation about the suspension point above the frame. Every pixel inside the
- * frame is a child of this wrapper and therefore moves as one rigid body.
+ * Owns no visual design. Mounts the visual-only FrameAppearance and drives a
+ * single rotation on .frame-body about the suspension point defined in CSS (the
+ * wire-meeting point above the frame). Independent shadow / glass / wire elements
+ * lag and breathe with the swing for added mass.
  *
- * Pointer events are translated into "hand force" through the usePendulum hook:
- *   down  → grab (soft spring couples hand to frame, frame lags / resists)
- *   move  → push (update the spring target)
- *   up    → release (spring drops, current angular velocity carries on)
+ * Pointer events become "hand force" through usePendulum:
+ *   down → grab (soft spring couples hand to frame, frame lags / resists)
+ *   move → push (update the spring target)
+ *   up   → release (spring drops, angular velocity carries on)
  */
 export default function GalleryFrame() {
   const { subscribe, grabStart, grabMove, grabEnd } = usePendulum();
 
-  const rigidRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const castRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+  const glassRef = useRef<HTMLDivElement>(null);
+  const wireLeftRef = useRef<SVGPathElement>(null);
+  const wireRightRef = useRef<SVGPathElement>(null);
 
-  // Single subscriber: write ONE rigid-body transform. No child ever computes
-  // its own transform.
+  // Single subscriber: write transforms to the rigid body + lagging elements.
   useEffect(() => {
     const write = (s: PendulumState) => {
       const a = s.angleDeg; // -MAX_ABS .. MAX_ABS (deg)
       const norm = a / MAX_ABS; // -1 .. 1
-      if (rigidRef.current) {
-        rigidRef.current.style.transform = `rotate(${(REST_TILT + a).toFixed(4)}deg)`;
+
+      if (bodyRef.current) {
+        bodyRef.current.style.transform = `rotate(${(REST_TILT + a).toFixed(4)}deg)`;
+        bodyRef.current.style.zIndex = Math.abs(norm) > 0.02 || s.grabbed ? "40" : "1";
       }
-      // While active, keep the frame above the copy; settle back at rest.
-      if (rigidRef.current) {
-        rigidRef.current.style.zIndex = Math.abs(norm) > 0.02 || s.grabbed ? "40" : "2";
+
+      // Cast shadow lags the body and rotates ~75% as much, slides a few px.
+      if (castRef.current) {
+        castRef.current.style.transform = `translate3d(${(30 + norm * 12).toFixed(1)}px, ${(38 + Math.abs(norm) * 7).toFixed(1)}px, 0) skewX(${(-3 - norm * 1.6).toFixed(2)}deg) rotate(${(a * 0.75).toFixed(3)}deg)`;
+        castRef.current.style.opacity = (0.9 - Math.abs(norm) * 0.12).toFixed(3);
+      }
+
+      // Contact shadow darkens as the frame returns to the wall, fades as it leans off.
+      if (contactRef.current) {
+        contactRef.current.style.opacity = (0.1 - Math.abs(norm) * 0.04).toFixed(3);
+      }
+
+      // Glass reflection drifts a few px as the frame tilts, biased toward the
+      // upper-left window source so it reads as the room's light, not a generic
+      // slide. Fades slightly with orientation. Physics/timing untouched.
+      if (glassRef.current) {
+        const gx = (-norm * 14).toFixed(1);
+        const gy = (norm * 6).toFixed(1);
+        glassRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+        glassRef.current.style.opacity = (0.38 - Math.abs(norm) * 0.08).toFixed(3);
+      }
+
+      // Wires splay slightly with the swing so the suspension reads physical.
+      const splay = (norm * 3.5).toFixed(2);
+      if (wireLeftRef.current) {
+        wireLeftRef.current.setAttribute(
+          "d",
+          `M2 0 C ${2.9 + Number(splay)} 34, ${1.4 + Number(splay)} 68, 2 100`,
+        );
+      }
+      if (wireRightRef.current) {
+        wireRightRef.current.setAttribute(
+          "d",
+          `M2 0 C ${1.2 + Number(splay)} 33, ${2.7 + Number(splay)} 67, 2 100`,
+        );
       }
     };
     return subscribe(write);
@@ -44,7 +82,7 @@ export default function GalleryFrame() {
 
   // Hand model: press = grab (soft spring), move = push, release = momentum.
   useEffect(() => {
-    const el = rigidRef.current;
+    const el = bodyRef.current;
     if (!el) return;
 
     const onDown = (e: PointerEvent) => {
@@ -72,18 +110,13 @@ export default function GalleryFrame() {
   }, [grabStart, grabMove, grabEnd]);
 
   return (
-    <div
-      ref={rigidRef}
-      className="frame-rigid relative w-full"
-      style={{
-        cursor: "grab",
-        touchAction: "none",
-        // Pivot at the suspension point: the top-centre of the wrapper, i.e. the
-        // hook where the wires meet above the frame. The frame swings from here.
-        transformOrigin: "50% 0%",
-      }}
-    >
-      <FrameAppearance />
-    </div>
+    <FrameAppearance
+      bodyRef={bodyRef}
+      castRef={castRef}
+      contactRef={contactRef}
+      glassRef={glassRef}
+      wireLeftRef={wireLeftRef}
+      wireRightRef={wireRightRef}
+    />
   );
 }
